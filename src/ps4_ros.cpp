@@ -15,8 +15,8 @@ public:
         // get ros param
         ros::NodeHandle private_nh("~");
         private_nh.param("scale_linear", this->scale_linear, 1.0);
-        private_nh.param("scale_angular", this->scale_angular, 1.0);
-        private_nh.param<std::string>("pub_topic", this->pubName, "/searchbot/p3at/vel_cmd");
+        private_nh.param("scale_angular", this->scale_angular, 10.0);
+        private_nh.param<std::string>("pub_topic", this->pubName, "/vel_cmd");
 
         this->chat = n.advertise<geometry_msgs::Twist>(pubName, 1000);
         this->sub = n.subscribe<sensor_msgs::Joy>("/joy", 10, &PS4_ROS::subscribePS4, this);
@@ -41,9 +41,9 @@ public:
     }
 
     void run() {
-        if(this->calib) {
+        // if(this->calib) {
             this->publishTwistMsg();
-        }
+        // }
     }
 
     void prepareData()
@@ -52,12 +52,17 @@ public:
         this->send_l2 = (-0.5 * this->l2) + 0.5;
         this->send_r2 = (this->r2 - 1.0) * 0.5;
 
-        // Apply rosparam "scale_linear"
-        this->send_l2 = this->scale_linear * this->send_l2;
-        this->send_r2 = this->scale_linear * this->send_r2;
-
+      //   // Apply rosparam "scale_linear"
+        // this->send_l2 = this->scale_linear * this->send_l2;
+        // this->send_r2 = this->scale_linear * this->send_r2;
+        //
         // Apply rosparam "scale_angular"
-        this->send_leftStickX = this->scale_angular * this->leftStickX;
+      // this->send_leftStickX = this->scale_linear * this->leftStickX;
+      // this->send_leftStickY = this->scale_linear * this->leftStickY;
+      // this->send_rightStickX = this->scale_angular * this->rightStickX;
+      this->send_leftStickX = this->leftStickX;
+      this->send_leftStickY = this->leftStickY;
+      this->send_rightStickX =  this->rightStickX;
     }
 
     void publishTwistMsg() {
@@ -74,16 +79,24 @@ public:
 
         //printRaw();
         if(!this->buttonTouch) {
-            if ((this->send_l2 >= 0.1) && (this->send_l2 <= maxVel)) {
-                msg.linear.x = this->send_l2;
-            } else if ((this->send_r2 <= 0.0) && (this->send_r2 >= maxVelR)) {
-                msg.linear.x = this->send_r2;
-            }
-            msg.angular.z = this->send_leftStickX;
+//            if ((this->send_l2 >= 0.1) && (this->send_l2 <= maxVel)) {
+//                msg.linear.x = this->send_l2;
+//            } else if ((this->send_r2 <= 0.0) && (this->send_r2 >= maxVelR)) {
+//                msg.linear.x = this->send_r2;
+//            }
+            msg.linear.x = this->send_leftStickY * this->scale_linear;
+            // msg.linear.y = this->send_leftStickX;
+            msg.angular.z = this->send_rightStickX * this->scale_angular;
         }
         else{
             //ROS_WARN("SENDING EMERGENCY STOP");
+            msg.linear.x = 0.0;
+            msg.linear.y = 0.0;
+            msg.linear.z = 0.0;
 
+            msg.angular.x = 0.0;
+            msg.angular.y = 0.0;
+            msg.angular.z = 0.0;
             /* To Do */
         }
 
@@ -199,7 +212,7 @@ private:
     double maxVel, maxVelR;
 
     /* send data */
-    double send_leftStickX, send_l2, send_r2;
+    double send_leftStickX, send_leftStickY, send_rightStickX, send_l2, send_r2;
 
 };
 
@@ -210,26 +223,26 @@ int main(int argc, char **argv) {
     // create ps4_ros object
     PS4_ROS *ps4_ros = new PS4_ROS(n);
 
-    // calibrate
-    ROS_WARN("Press L2 and R2 to calibrate");
-    bool ready = false;
-    while(!ready)
-    {
-        ready = ps4_ros->calibrate();
-        ros::spinOnce();
-        ros::Duration(0.1).sleep();
-    }
-
-    ROS_WARN("Release L2 and R2");
-    ros::Duration(2.0).sleep();
-    ready = false;
-    while(!ready)
-    {
-        ready = ps4_ros->waitForRelease();
-        ros::spinOnce();
-        ros::Duration(0.1).sleep();
-    }
-    ROS_INFO("Calibrated - Ready to use");
+    // // calibrate
+    // ROS_WARN("Press L2 and R2 to calibrate");
+    // bool ready = false;
+    // while(!ready)
+    // {
+    //     ready = ps4_ros->calibrate();
+    //     ros::spinOnce();
+    //     ros::Duration(0.1).sleep();
+    // }
+    //
+    // ROS_WARN("Release L2 and R2");
+    // ros::Duration(2.0).sleep();
+    // ready = false;
+    // while(!ready)
+    // {
+    //     ready = ps4_ros->waitForRelease();
+    //     ros::spinOnce();
+    //     ros::Duration(0.1).sleep();
+    // }
+    // ROS_INFO("Calibrated - Ready to use");
 
     ros::Rate loop_rate(10);
     while(ros::ok())
