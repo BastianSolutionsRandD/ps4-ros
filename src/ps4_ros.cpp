@@ -15,8 +15,8 @@ public:
         // get ros param
         ros::NodeHandle private_nh("~");
         private_nh.param("scale_linear", this->scale_linear, 1.0);
-        private_nh.param("scale_angular", this->scale_angular, 10.0);
-        private_nh.param<std::string>("pub_topic", this->pubName, "/vel_cmd");
+        private_nh.param("scale_angular", this->scale_angular, 1.0);
+        private_nh.param<std::string>("pub_topic", this->pubName, "/cmd_vel");
 
         this->chat = n.advertise<geometry_msgs::Twist>(pubName, 1000);
         this->sub = n.subscribe<sensor_msgs::Joy>("/joy", 10, &PS4_ROS::subscribePS4, this);
@@ -24,7 +24,7 @@ public:
         /* set calibration counter to zero */
         this->calib1 = 0;
         this->calib2 = 0;
-        this->calib = false;
+        this->calib = true;
 
         this->maxVel = this->scale_linear;
         this->maxVelR = this->scale_linear * -1;

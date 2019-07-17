@@ -1,9 +1,9 @@
 #!/bin/sh
 
+# sudo chmod 666 /dev/uinput
+# sudo rm /dev/input/js0;
+# sudo rm /dev/input/js1;
+# source smws;
 
-# sudo chmod a+rw /dev/input/js*
-sudo chmod 666 /dev/uinput
-sudo rm /dev/input/js*;
-smws;
-chmod a+rw /dev/input/js*
+# This uses ds4drv --hidraw which allows connecting to an already paired remote, thus removing the need to sync every time.
 ds4drv --hidraw
